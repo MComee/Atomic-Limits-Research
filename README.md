@@ -112,7 +112,7 @@ If you use or reference this work:
 
 ```
 Atomic Stability Limits and Exceptional Mathematical Structures
-https://github.com/YOUR_USERNAME/atomic-limits-research
+https://github.com/MComee/atomic-limits-research
 2026
 ```
 
