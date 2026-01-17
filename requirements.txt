@@ -1,0 +1,18 @@
+# Core verification script uses only Python standard library
+# No dependencies required for basic verification
+
+# Optional: For extended research and analysis
+# Uncomment if you want to use these tools
+
+# sympy>=1.12          # Symbolic mathematics, number theory
+# mpmath>=1.3.0        # Arbitrary precision arithmetic
+# numpy>=1.24.0        # Numerical computing
+# scipy>=1.10.0        # Scientific computing
+# matplotlib>=3.7.0    # Plotting and visualization
+
+# For advanced group theory and algebra
+# sagemath            # (Install separately - very large package)
+
+# For Jupyter notebook exploration
+# jupyter>=1.0.0
+# ipython>=8.0.0
