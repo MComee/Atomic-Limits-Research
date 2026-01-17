@@ -1,83 +1,127 @@
 #!/usr/bin/env python3
 """
 Atomic Stability Limits - Exceptional Mathematics Verification
-Verify all calculations related to 1/137, 1/92, 1/173, and fine-structure constant
+UNIVERSAL VERSION: Works on Termux, Linux, macOS, Windows PowerShell - EVERYWHERE
 """
 
-from decimal import Decimal, getcontext
-import math
 import sys
 import time
+import os
+from decimal import Decimal, getcontext
 
-# Set high precision for accurate calculations
-getcontext().prec = 500  # Increased for fine-structure constant analysis
+# Set high precision
+getcontext().prec = 500
 
-def progress_bar(current, total, prefix='', suffix='', length=50):
-    """Display a progress bar in the terminal"""
-    percent = 100 * (current / float(total))
-    filled = int(length * current // total)
-    bar = '█' * filled + '-' * (length - filled)
-    sys.stdout.write(f'\r{prefix} |{bar}| {percent:.1f}% {suffix}')
-    sys.stdout.flush()
-    if current == total:
-        print()  # New line on completion
+# ============================================================================
+# UNIVERSAL PROGRESS SYSTEM - Works on ALL platforms
+# ============================================================================
 
-def spinner(message, delay=0.1):
-    """Simple spinner for operations without known length"""
-    frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
-    for frame in frames:
-        sys.stdout.write(f'\r{frame} {message}')
-        sys.stdout.flush()
-        time.sleep(delay)
-    sys.stdout.write('\r')
-    sys.stdout.flush()
+class UniversalProgress:
+    """Progress indicator that works on ANY terminal"""
+    
+    def __init__(self):
+        # Detect terminal capabilities
+        self.is_tty = sys.stdout.isatty()
+        self.supports_cr = self._test_carriage_return()
+        self.width = self._get_terminal_width()
+    
+    def _test_carriage_return(self):
+        """Test if terminal supports \\r for in-place updates"""
+        # Windows PowerShell, cmd, and most Unix terminals support it
+        # Some emulators might not
+        return self.is_tty and os.name != 'java'
+    
+    def _get_terminal_width(self):
+        """Get terminal width, default to 80 if unknown"""
+        try:
+            return os.get_terminal_size().columns
+        except:
+            return 80
+    
+    def show(self, message, current=None, total=None, final=False):
+        """
+        Universal progress display
+        Works with or without carriage return support
+        """
+        if current is not None and total is not None:
+            # Calculate percentage
+            percent = int(100 * current / total)
+            
+            if self.supports_cr and not final:
+                # Terminal supports \\r - update in place
+                bar_width = min(30, self.width - 40)
+                filled = int(bar_width * current / total)
+                bar = '#' * filled + '-' * (bar_width - filled)
+                line = f"[{bar}] {percent}% {message}"
+                # Pad to clear previous text
+                line = line.ljust(self.width - 1)
+                sys.stdout.write(f'\\r{line}')
+                sys.stdout.flush()
+            else:
+                # No \\r support or final message - use newlines
+                if percent % 10 == 0 or final:  # Only print every 10% to avoid spam
+                    print(f"  [{percent:3d}%] {message}")
+        else:
+            # Simple message
+            if self.supports_cr and not final:
+                sys.stdout.write(f'\\r{message}')
+                sys.stdout.flush()
+            else:
+                print(f"  {message}")
+        
+        if final and self.supports_cr:
+            print()  # New line after completion
+    
+    def done(self):
+        """Mark current operation as complete"""
+        if self.supports_cr:
+            print()  # Ensure we're on a new line
 
-def find_period_length(n, max_length=500, show_progress=False):
-    """
-    Find the length of the repeating period in decimal expansion of 1/n
-    Uses multiplicative order of 10 mod n
-    """
+# Global progress handler
+progress = UniversalProgress()
+
+# ============================================================================
+# CORE FUNCTIONS
+# ============================================================================
+
+def find_period_length(n, max_length=500):
+    """Find the length of the repeating period in 1/n"""
     remainders = {}
     remainder = 1
     position = 0
     
     while remainder != 0 and position < max_length:
-        if show_progress and position % 100 == 0:
-            progress_bar(position, max_length, prefix=f'Finding period for 1/{n}', length=30)
+        if position % 50 == 0:
+            progress.show(f"Finding period for 1/{n}", position, max_length)
         
         if remainder in remainders:
             period_start = remainders[remainder]
             period_length = position - period_start
-            if show_progress:
-                progress_bar(max_length, max_length, prefix=f'Finding period for 1/{n}', suffix='Complete')
+            progress.show(f"Finding period for 1/{n}", max_length, max_length, final=True)
             return period_start, period_length
         
         remainders[remainder] = position
         remainder = (remainder * 10) % n
         position += 1
     
-    if show_progress:
-        print()  # New line
+    progress.done()
     return 0, 0
 
-def get_period_digits(n, max_digits=500, show_progress=False):
-    """
-    Extract the actual repeating period digits from 1/n
-    """
+def get_period_digits(n, max_digits=500):
+    """Extract the actual repeating period digits from 1/n"""
     decimal_digits = []
     remainder = 1
     seen = {}
     position = 0
     
     while remainder != 0 and position < max_digits:
-        if show_progress and position % 100 == 0:
-            spinner(f'Extracting period digits for 1/{n}... ({position}/{max_digits})', delay=0.01)
+        if position % 50 == 0:
+            progress.show(f"Extracting digits for 1/{n}", position, max_digits)
         
         if remainder in seen:
             period_start = seen[remainder]
             period = ''.join(decimal_digits[period_start:])
-            if show_progress:
-                print(f'\r✓ Extracted period for 1/{n} ({len(period)} digits)' + ' ' * 30)
+            progress.show(f"Extracting digits for 1/{n}", max_digits, max_digits, final=True)
             return period_start, period
         
         seen[remainder] = position
@@ -87,8 +131,7 @@ def get_period_digits(n, max_digits=500, show_progress=False):
         remainder = remainder % n
         position += 1
     
-    if show_progress:
-        print()
+    progress.done()
     return 0, ''.join(decimal_digits)
 
 def to_base(num, base):
@@ -101,194 +144,196 @@ def to_base(num, base):
         num //= base
     return ''.join(reversed(digits))
 
-def prime_factorization(n):
-    """Get prime factorization of n"""
+def prime_factorization(n, max_time=3.0):
+    """
+    Prime factorization with timeout protection
+    Returns None if number is too large or taking too long
+    """
     if n <= 1:
         return []
+    
+    # Skip factorization for numbers > 10^12 (would take forever)
+    if n > 10**12:
+        return None
+    
     factors = []
     d = 2
+    start_time = time.time()
+    checks = 0
+    
     while d * d <= n:
+        # Check timeout every 10000 iterations
+        checks += 1
+        if checks % 10000 == 0:
+            elapsed = time.time() - start_time
+            if elapsed > max_time:
+                return None  # Timeout - number too hard to factor
+        
         while n % d == 0:
             factors.append(d)
             n //= d
         d += 1
+    
     if n > 1:
         factors.append(n)
+    
     return factors
 
 def analyze_number(n, name):
-    """Complete analysis of 1/n"""
+    """Complete analysis of 1/n with universal progress indicators"""
+    print()
     print("=" * 80)
     print(f"ANALYSIS OF 1/{n} - {name}")
     print("=" * 80)
+    print()
     
     # Find period
+    print(">> Finding decimal period...")
     period_start, period = get_period_digits(n)
     period_length = len(period)
     
-    print(f"\n{'DECIMAL PERIOD':.<40} {period}")
-    print(f"{'Period length':.<40} {period_length}")
-    print(f"{'Period starts at position':.<40} {period_start}")
+    print(f"\nPeriod: {period[:70]}{'...' if len(period) > 70 else ''}")
+    print(f"Period length: {period_length}")
+    print(f"Starts at position: {period_start}")
     
-    # Verify using multiplicative order
+    # Verify
     if period_length > 0:
         check = pow(10, period_length, n)
-        print(f"{'Verification (10^{period_length} mod {n})':.<40} {check} {'✓' if check == 1 else '✗'}")
+        status = "VERIFIED" if check == 1 else "FAILED"
+        print(f"Verification (10^{period_length} mod {n} = 1): {status}")
     
-    # Convert period to integer for further analysis
+    # Analyze period as integer
     if period and period != '0':
         period_int = int(period)
+        num_digits = len(str(period_int))
         
-        print(f"\n{'PERIOD AS INTEGER':.<40} {period_int}")
+        print(f"\n{'='*80}")
+        print(f"PERIOD AS INTEGER ({num_digits} digits)")
+        print(f"{'='*80}")
         
-        # Prime factorization
-        factors = prime_factorization(period_int)
-        if factors:
-            factor_str = ' × '.join(map(str, factors))
-            print(f"{'Prime factorization':.<40} {factor_str}")
+        # Prime factorization (with size check)
+        if num_digits <= 12:
+            print("\n>> Computing prime factorization...")
+            factors = prime_factorization(period_int)
+            
+            if factors is None:
+                print("   (Timeout - number too large to factor quickly)")
+            elif factors:
+                factor_str = ' x '.join(map(str, factors[:30]))
+                if len(factors) > 30:
+                    factor_str += f" ... ({len(factors)} factors total)"
+                print(f"   {factor_str}")
+        else:
+            print(f"\n   Skipping factorization (number has {num_digits} digits)")
         
         # Digit analysis
+        print("\n>> Analyzing digits...")
         digits = [int(d) for d in period]
         unique_digits = sorted(set(digits))
         digit_sum = sum(digits)
         
-        print(f"\n{'DIGIT ANALYSIS':-^80}")
-        print(f"{'Unique digits':.<40} {unique_digits}")
-        print(f"{'All 10 digits present':.<40} {'Yes ✓' if len(unique_digits) == 10 else 'No'}")
-        print(f"{'Digit sum':.<40} {digit_sum}")
+        print(f"\n   Unique digits: {unique_digits}")
+        print(f"   All 10 digits present: {'YES' if len(unique_digits) == 10 else 'NO'}")
+        print(f"   Digit sum: {digit_sum}")
         
-        # Factor the digit sum
-        sum_factors = prime_factorization(digit_sum)
+        # Factor digit sum (always small enough)
+        sum_factors = prime_factorization(digit_sum, max_time=1.0)
         if sum_factors:
-            sum_factor_str = ' × '.join(map(str, sum_factors))
-            print(f"{'Digit sum factorization':.<40} {sum_factor_str}")
+            sum_factor_str = ' x '.join(map(str, sum_factors))
+            print(f"   Digit sum factors: {sum_factor_str}")
             has_3_squared = sum_factors.count(3) >= 2
-            print(f"{'Contains 3²':.<40} {'Yes ✓' if has_3_squared else 'No'}")
-        
-        # Product of non-zero digits (if reasonable size)
-        non_zero = [d for d in digits if d != 0]
-        if non_zero and len(non_zero) < 50:
-            try:
-                product = 1
-                for d in non_zero:
-                    product *= d
-                print(f"{'Product of non-zero digits':.<40} {product:,}")
-            except:
-                print(f"{'Product of non-zero digits':.<40} (too large)")
-        
-        # Digit frequency
-        freq = sorted([(d, digits.count(d)) for d in set(digits)])
-        freq_str = ', '.join([f"{d}:{count}" for d, count in freq])
-        print(f"{'Digit frequency':.<40} {freq_str}")
+            print(f"   Contains 3^2: {'YES' if has_3_squared else 'NO'}")
         
         # Base conversions
-        print(f"\n{'BASE CONVERSIONS':-^80}")
+        print("\n>> Converting to other bases...")
         
+        print("\n   Binary:")
         binary = bin(period_int)[2:]
-        print(f"{'Binary':.<40} {binary}")
-        print(f"{'Binary length (bits)':.<40} {len(binary)}")
+        print(f"     {binary[:70]}{'...' if len(binary) > 70 else ''}")
+        print(f"     Length: {len(binary)} bits")
         ones = binary.count('1')
         zeros = binary.count('0')
-        print(f"{'Binary ones':.<40} {ones}")
-        print(f"{'Binary zeros':.<40} {zeros}")
-        print(f"{'Perfect binary balance':.<40} {'Yes ✓' if ones == zeros else 'No'}")
+        print(f"     Ones: {ones}, Zeros: {zeros}")
+        print(f"     Perfect balance: {'YES' if ones == zeros else 'NO'}")
         
-        if ones == zeros:
-            # Check for special relationships
-            if ones % period_length == 0:
-                print(f"{'Ones/zeros per period digit':.<40} {ones / period_length}")
-        
+        print("\n   Ternary (base-3):")
         ternary = to_base(period_int, 3)
-        print(f"\n{'Ternary (base-3)':.<40} {ternary[:60]}...")
-        print(f"{'Ternary length':.<40} {len(ternary)}")
+        print(f"     {ternary[:70]}{'...' if len(ternary) > 70 else ''}")
+        print(f"     Length: {len(ternary)} digits")
         if len(ternary) == 2 * period_length:
-            print(f"{'Ternary = 2 × period':.<40} Yes ✓✓✓")
-        else:
-            print(f"{'Ternary / period ratio':.<40} {len(ternary) / period_length:.4f}")
+            print(f"     SPECIAL: Length = 2 x period ({period_length})!")
         
+        print("\n   Octal (base-8):")
         octal = oct(period_int)[2:]
-        print(f"\n{'Octal (base-8)':.<40} {octal[:60]}...")
-        print(f"{'Octal length':.<40} {len(octal)}")
-        
-        # Special checks for known values
+        print(f"     {octal[:70]}{'...' if len(octal) > 70 else ''}")
+        print(f"     Length: {len(octal)} digits")
         if len(octal) == 24:
-            print(f"{'Octal length = 24 (Golay!)':.<40} Yes ✓✓✓")
+            print(f"     SPECIAL: Length = 24 (Golay code dimension)!")
         
+        print("\n   Hexadecimal:")
         hexval = hex(period_int)[2:]
-        print(f"\n{'Hexadecimal':.<40} {hexval[:60]}...")
-        print(f"{'Hex length':.<40} {len(hexval)}")
+        print(f"     {hexval[:70]}{'...' if len(hexval) > 70 else ''}")
+        print(f"     Length: {len(hexval)} digits")
         
-        # Modulo checks
-        print(f"\n{'MODULO OPERATIONS':-^80}")
+        # Modulo operations
+        print("\n>> Modulo operations:")
         for mod in [8, 22, 23, 24, 43]:
             result = period_int % mod
-            print(f"{'Period mod ' + str(mod):.<40} {result}")
-    
-    print("\n")
-
-def verify_multiplicative_order(n, expected_order):
-    """
-    Verify that 10^expected_order ≡ 1 (mod n)
-    This is the fundamental property behind period length
-    """
-    result = pow(10, expected_order, n)
-    success = result == 1
-    
-    print(f"Verifying: 10^{expected_order} ≡ 1 (mod {n})")
-    print(f"Result: 10^{expected_order} mod {n} = {result}")
-    print(f"{'✓ VERIFIED' if success else '✗ FAILED'}")
-    print()
-    
-    return success
+            print(f"     Period mod {mod:2d} = {result}")
 
 def analyze_rational_number(numerator, denominator, name):
-    """
-    Analyze a rational number (numerator/denominator)
-    Used for 137.036 = 137036/1000 = 34259/250
-    """
-    print(f"\n{'*'*70}")
-    print(f"{numerator}/{denominator} - {name}")
-    print(f"{'*'*70}")
+    """Analyze a rational number like 137.036 = 34259/250"""
+    print()
+    print("=" * 80)
+    print(f"ANALYSIS OF {numerator}/{denominator} - {name}")
+    print("=" * 80)
+    print()
     
-    # For a rational a/b, analyze 1/(a/b) = b/a
-    # So for 137.036 = 34259/250, we analyze period of 250/34259
-    # Which is the same as period of 1/(34259/250) in lowest terms
+    print(f"Decimal value: {numerator/denominator}")
+    print(f"Reciprocal: {denominator}/{numerator}")
     
-    print(f"\nDecimal value: {numerator/denominator}")
-    print(f"Reciprocal: 1/{numerator/denominator} = {denominator}/{numerator}")
-    print(f"\nAnalyzing period structure of {denominator}/{numerator}:")
-    
-    # The period is based on denominator in lowest terms
+    # Reduce to lowest terms
     from math import gcd
     g = gcd(numerator, denominator)
     reduced_num = numerator // g
     reduced_den = denominator // g
     
     print(f"Reduced form: {reduced_den}/{reduced_num}")
-    print(f"\nFor period analysis, we check the denominator: {reduced_num}")
+    print(f"\nAnalyzing denominator {reduced_num}...")
     
-    analyze_number(reduced_num, f"Denominator of 1/{numerator/denominator}")
+    analyze_number(reduced_num, f"Denominator of {numerator/denominator:.6f}")
+
+def verify_multiplicative_order(n, expected_order):
+    """Verify that 10^expected_order ≡ 1 (mod n)"""
+    result = pow(10, expected_order, n)
+    success = result == 1
+    
+    status = "VERIFIED" if success else "FAILED"
+    print(f"10^{expected_order} mod {n} = {result} ... {status}")
+    
+    return success
 
 def find_all_with_period(target_period, max_n=1000):
-    """
-    Find all numbers up to max_n that have the given period length
-    """
-    print(f"\nSearching for all n ≤ {max_n} with period length {target_period}...")
+    """Find all numbers up to max_n with the given period length"""
+    print(f"\nSearching for numbers with period {target_period} (up to {max_n})...")
     results = []
     
     for n in range(2, max_n + 1):
         if n % 50 == 0:
-            progress_bar(n, max_n, prefix=f'Searching period {target_period}', length=30)
+            progress.show(f"Searching period {target_period}", n, max_n)
+        
         _, period_length = find_period_length(n)
         if period_length == target_period:
             results.append(n)
     
-    progress_bar(max_n, max_n, prefix=f'Searching period {target_period}', suffix='Complete', length=30)
+    progress.show(f"Searching period {target_period}", max_n, max_n, final=True)
     
-    print(f"Found {len(results)} numbers with period {target_period}:")
-    print(results[:50])  # Show first 50
-    if len(results) > 50:
-        print(f"... and {len(results) - 50} more")
+    print(f"\nFound {len(results)} numbers with period {target_period}:")
+    if len(results) <= 50:
+        print(f"  {results}")
+    else:
+        print(f"  {results[:50]}")
+        print(f"  ... and {len(results) - 50} more")
     
     return results
 
@@ -299,103 +344,83 @@ def main():
     print("ATOMIC STABILITY LIMITS - EXCEPTIONAL MATHEMATICS")
     print("Computational Verification Suite")
     print("=" * 80)
+    print("\nProgress indicators enabled for all platforms")
+    print("(Termux, Linux, macOS, Windows PowerShell)")
     print()
     
-    # Numbers to analyze
+    # Analyses to perform
     analyses = [
-        (137, "Fine-Structure Constant (~1/α)"),
+        (137, "Fine-Structure Constant (~1/alpha)"),
         (92, "Highest Natural Element (Uranium)"),
         (173, "Feynman Limit (Vacuum Pair Creation)"),
     ]
     
-    # Additional analyses
-    print("Note: Also analyzing fine-structure constant variants...")
+    print("Note: Also analyzing fine-structure constant variants:")
     print("  - 1/137.036 (actual NIST value)")
     print("  - 1/137036 (integer form)")
     print()
     
-    total_analyses = len(analyses) + 2  # +2 for the variants
-    current = 0
+    total_steps = len(analyses) + 2
     
     # Analyze the three key numbers
-    for n, name in analyses:
-        current += 1
-        print(f"\n[{current}/{total_analyses}] Analyzing 1/{n}...")
+    for i, (n, name) in enumerate(analyses, 1):
+        print(f"\n[STEP {i}/{total_steps}] Analyzing 1/{n}")
         analyze_number(n, name)
     
-    # Analyze 137.036 (requires rational approximation)
-    current += 1
-    print(f"\n[{current}/{total_analyses}] Analyzing 1/137.036 (actual fine-structure constant)...")
-    print("=" * 80)
-    print("Note: Using rational approximation 137036/1000 = 34259/250")
-    print("=" * 80)
-    analyze_rational_number(34259, 250, "Fine-Structure α⁻¹ ≈ 137.036")
+    # Analyze 137.036 (rational approximation)
+    print(f"\n[STEP 4/{total_steps}] Analyzing 1/137.036")
+    print("Using rational approximation: 137036/1000 = 34259/250")
+    analyze_rational_number(34259, 250, "Fine-Structure Constant (137.036)")
     
     # Analyze 137036 as integer
-    current += 1
-    print(f"\n[{current}/{total_analyses}] Analyzing 1/137036 (integer form)...")
-    analyze_number(137036, "Fine-Structure Integer (137036)")
+    print(f"\n[STEP 5/{total_steps}] Analyzing 1/137036")
+    analyze_number(137036, "Fine-Structure Integer Form")
     
     # Verify multiplicative orders
     print("\n" + "=" * 80)
     print("MULTIPLICATIVE ORDER VERIFICATION")
     print("=" * 80)
-    print("\nThe period of 1/n equals the multiplicative order of 10 mod n")
-    print("This means 10^(period) ≡ 1 (mod n)\n")
+    print("\nVerifying: 10^(period) ≡ 1 (mod n)")
+    print()
     
-    print("[1/3] Verifying core numbers...")
     verify_multiplicative_order(137, 8)
     verify_multiplicative_order(92, 22)
     verify_multiplicative_order(173, 43)
     
-    # Find other numbers with these periods
+    # Find other numbers
     print("\n" + "=" * 80)
     print("FINDING OTHER NUMBERS WITH THESE PERIODS")
     print("=" * 80)
     
-    print("\n[2/3] Searching for numbers with period 8...")
     period_8 = find_all_with_period(8, 500)
-    
-    print("\n[2/3] Searching for numbers with period 22...")
     period_22 = find_all_with_period(22, 500)
-    
-    print("\n[3/3] Searching for numbers with period 43...")
     period_43 = find_all_with_period(43, 500)
     
     # Summary
     print("\n" + "=" * 80)
-    print("SUMMARY OF KEY FINDINGS")
+    print("SUMMARY")
     print("=" * 80)
     
-    print("\n1/137 (Fine-Structure Constant):")
-    print("  - Period length: 8 (E8 lattice dimension)")
-    print("  - Contains 729 = 3^6")
-    print("  - Digit sum: 36 = 2² × 3²")
+    print("\n1/137: Period = 8 (E8 lattice dimension)")
+    print("  - Digit sum = 36 = 2^2 x 3^2")
     print("  - Binary: perfect balance (10 ones, 10 zeros)")
     
-    print("\n1/92 (Uranium - Highest Natural Element):")
-    print("  - Period length: 22 (Mathieu M22 dimension)")
-    print("  - Contains all 10 digits")
-    print("  - Digit sum: 99 = 3² × 11")
-    print("  - Ternary: 44 digits = 2 × 22 ✓")
-    print("  - Octal: 24 digits (Extended Golay G24) ✓")
+    print("\n1/92: Period = 22 (Mathieu M22 dimension)")
+    print("  - All 10 digits present")
+    print("  - Digit sum = 99 = 3^2 x 11")
+    print("  - Ternary: 44 digits = 2 x 22")
+    print("  - Octal: 24 digits (Golay G24)")
     
-    print("\n1/173 (Feynman Limit):")
-    print("  - Period length: 43 (Monster moonshine prime)")
-    print("  - Contains all 10 digits")
-    print("  - Digit sum: 207 = 3² × 23 (Mathieu M23)")
+    print("\n1/173: Period = 43 (Monster moonshine prime)")
+    print("  - All 10 digits present")
+    print("  - Digit sum = 207 = 3^2 x 23")
     print("  - Binary: perfect balance (68 ones, 68 zeros)")
-    print("  - Ternary: 86 digits = 2 × 43 ✓")
-    print("  - Binary bits: 136 = 8 × 17")
-    
-    print("\n1/137.036 (Actual Fine-Structure Constant):")
-    print("  - Rational approximation: 34259/250")
-    print("  - See analysis above for period structure")
-    print("  - Check if dimension-8 encoding is preserved")
+    print("  - Ternary: 86 digits = 2 x 43")
     
     print("\n" + "=" * 80)
-    print("✓ All calculations verified successfully")
+    print("VERIFICATION COMPLETE")
     print("=" * 80)
+    print()
 
 if __name__ == "__main__":
     main()
