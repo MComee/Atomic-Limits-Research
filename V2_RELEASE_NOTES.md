@@ -1,20 +1,23 @@
 # Atomic Limits Research - Version 2.0 Release Notes
 
+**Primary Investigator:** Matthew Comee  
 **Release Date:** January 17, 2026  
 **Version:** 2.0 (Post-Peer-Review Revision)  
-**Package:** atomic-limits-v2-peer-review.zip (311KB)
+**Package:** atomic-limits-v2-peer-review.zip (330KB)
 
 ---
 
 ## 📋 **Executive Summary**
 
-This release represents a **scientific success story** - rigorous peer review leading to improved understanding. Our research underwent adversarial review, revealed both errors and misunderstandings, and emerged stronger.
+This release represents Matthew Comee's research on connections between atomic stability limits and exceptional mathematical structures, subjected to rigorous multi-LLM peer review. 
 
 **Key Points:**
-- ✓ Some claims validated
-- ✗ Some claims corrected
-- ⚠️ Some claims under revision
-- 🤝 Productive scientific dialogue established
+- ✓ Matthew's discoveries validated through independent verification
+- ✗ One connection corrected (Monster group)
+- ⚠️ Some aspects under continued investigation
+- 🤝 Productive scientific dialogue with AI peer reviewer
+
+**Read:** `RESEARCH_PROCESS.md` for how this work happened.
 
 ---
 
@@ -162,22 +165,30 @@ Question: What is the period of 1/34259?
 
 ## 📦 **Package Contents**
 
+### 🔬 **CRITICAL - METHODOLOGY DISCLOSURE:**
+
+1. **PEER_REVIEW_METHODOLOGY.md** - **REQUIRED READING FOR REPRODUCIBILITY**
+   - Full disclosure: Claude Sonnet 4.5 + Gemini 3 Deep Research
+   - Complete verbatim prompt fed to Gemini
+   - All tools, modes, and infrastructure documented
+   - Without this, peer review is not reproducible
+
 ### 🆕 **NEW in v2.0:**
 
-1. **README_V2_REVISED.md** - Updated overview explaining peer review
-2. **RESPONSE_TO_REVIEWER_8821.md** - Formal point-by-point response
-3. **verify_atomic_limits_v2_corrected.py** - Fixed script with clear terminology
-4. **peer_review_verification.py** - Emergency triage of reviewer's claims
-5. **counter_review_analysis.py** - Our systematic analysis of the review
-6. **clarify_ternary_doubling.py** - Demonstrates exactly what we measured
+2. **README_V2_REVISED.md** - Updated overview explaining peer review
+3. **RESPONSE_TO_REVIEWER_8821.md** - Formal point-by-point response
+4. **verify_atomic_limits_v2_corrected.py** - Fixed script with clear terminology
+5. **peer_review_verification.py** - Emergency triage of reviewer's claims
+6. **counter_review_analysis.py** - Our systematic analysis of the review
+7. **clarify_ternary_doubling.py** - Demonstrates exactly what we measured
 
 ### 📄 **INCLUDED:**
 
-7. **Skeptical_Scientific_Code_Review.pdf** - The original peer review (15,200 words)
-8. **verify_atomic_limits.py** - Original verification (for comparison)
-9. **deep_pattern_analysis.py** - Pattern matching engine
-10. **investigation_1_uniqueness.py** - Test uniqueness of patterns
-11. **investigation_2_base3_doubling.py** - Base-3 analysis
+8. **Skeptical_Scientific_Code_Review.pdf** - The original peer review (15,200 words)
+9. **verify_atomic_limits.py** - Original verification (for comparison)
+10. **deep_pattern_analysis.py** - Pattern matching engine
+11. **investigation_1_uniqueness.py** - Test uniqueness of patterns
+12. **investigation_2_base3_doubling.py** - Base-3 analysis
 12. **investigation_3_fine_structure.py** - Test 137.036
 13. **investigation_4_gauge_theories.md** - Literature review
 14. **RESEARCH_REPORT_COMPREHENSIVE.md** - Full research report

@@ -1,8 +1,20 @@
 # Atomic Limits Research - REVISED (Post-Peer-Review)
 
+**Primary Investigator:** Matthew Comee  
 **Version:** 2.0  
 **Date:** January 17, 2026  
 **Status:** Under Peer Review - Revise & Resubmit
+
+---
+
+## 👤 **ATTRIBUTION**
+
+**All discoveries, patterns, and scientific insights:** Matthew Comee  
+**Computational verification tools:** Claude Sonnet 4.5, Gemini 3 Deep Research  
+
+**Read:** `RESEARCH_PROCESS.md`
+
+This is human-led scientific discovery using AI as verification tools, not AI-generated research.
 
 ---
 
@@ -114,7 +126,25 @@ All contain 3² factor.
 
 ---
 
+## 🔬 **METHODOLOGY DISCLOSURE** 
+
+**⚠️ CRITICAL: For scientific reproducibility, see PEER_REVIEW_METHODOLOGY.md**
+
+This document provides complete transparency:
+- **Research LLM:** Claude Sonnet 4.5 (Anthropic)
+- **Peer Review LLM:** Gemini 3 with Deep Research (Google)
+- **Exact prompt** fed to Gemini (full verbatim text)
+- **All tools and modes** enabled
+- **Complete workflow** documentation
+
+Without this disclosure, the peer review process is not reproducible.
+
+---
+
 ## 📁 **Repository Contents (v2.0)**
+
+### Critical Methodology
+- `PEER_REVIEW_METHODOLOGY.md` - **READ FIRST** - Complete LLM disclosure
 
 ### Verification Scripts
 - `verify_atomic_limits_v2_corrected.py` - **NEW** Corrected with clear terminology
